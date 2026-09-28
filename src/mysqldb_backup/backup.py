@@ -64,11 +64,11 @@ class MySQLBackup:
             isDumpCompleted = False
             with open(temp_file_path, "rb") as temp_file, gzip.open(target_file_path, "wb") as f_out:
                 for line in temp_file:
-                    if line.startswith(b"mysqldump: ", b"Warning: "):
+                    if line.startswith((b"mysqldump: ", b"Warning: ")):
                         continue  # 跳过 mysqldump 的警告信息
                     f_out.write(line)
                      # -- Dump completed on 2026-09-28 15:12:03
-                    if("-- Dump completed" in line):
+                    if "-- dump completed" in line.lower().strip():
                         isDumpCompleted = True
 
             exec_inspect = self.client.api.exec_inspect(exec_id)
