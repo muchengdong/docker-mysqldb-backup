@@ -1,0 +1,15 @@
+services:
+  db:
+    image: mysql:8.0.40
+    container_name: mysqldb
+    restart: on-failure
+    command: --lower_case_table_names=1
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: test
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
