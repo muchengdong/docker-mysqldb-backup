@@ -60,24 +60,30 @@ class MySQLBackup:
                 for chunk in exec_stream:
                     temp_file.write(chunk)
 
+            # 数据清洗
+            isDumpCompleted = False
             with open(temp_file_path, "rb") as temp_file, gzip.open(target_file_path, "wb") as f_out:
                 for line in temp_file:
-                    if line.startswith(b"mysqldump: "):
+                    if line.startswith(b"mysqldump: ", b"Warning: "):
                         continue  # 跳过 mysqldump 的警告信息
                     f_out.write(line)
-
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
+                     # -- Dump completed on 2026-09-28 15:12:03
+                    if("-- Dump completed" in line):
+                        isDumpCompleted = True
 
             exec_inspect = self.client.api.exec_inspect(exec_id)
             exit_code = exec_inspect.get("ExitCode", 0)
-            if exit_code == 0 and os.path.getsize(target_file_path) > 20:
+            if exit_code == 0 and os.path.getsize(target_file_path) > 20 and isDumpCompleted:
                 self.logger.log(f"备份成功! 文件已保存至: {target_file_path}")
                 try:
                     oss: OSS = OSS.newInstance(self.env, self.logger)
                     oss.upload_file(target_file_path)
                 except Exception as e:
                     print(e)
+                
+                # 删除临时文件
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
 
             else:
                 self.logger.log(
